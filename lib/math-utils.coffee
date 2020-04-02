@@ -2,24 +2,34 @@
 
 module.exports = MathUtils =
 
-  integrator: null
-  parser:     null
+  integrator:  null
+  parser:      null
+  parserLatex: null
 
   evaluateExpression: (rawExpression) ->
     if rawExpression.startsWith 'integrate('
       return @integrate rawExpression
 
     @setParser()
+    @setLatexParser()
     
     try
       result = allowUnsafeEval => allowUnsafeNewFunction =>
-        @parser.eval rawExpression
+        @parserLatex.fromLatex(rawExpression).evaluate()
 
       if typeof result is 'function'
         result = 'saved'
 
     catch error
-      result = 'wrong syntax'
+      try
+        result = allowUnsafeEval => allowUnsafeNewFunction =>
+          @parser.eval rawExpression
+
+        if typeof result is 'function'
+          result = 'saved'
+
+      catch error_inner
+        result = 'wrong syntax'
 
     result
 
@@ -41,3 +51,7 @@ module.exports = MathUtils =
   setParser: ->
     @parser ?= allowUnsafeEval ->
       allowUnsafeNewFunction -> require('mathjs').parser()
+      
+  setLatexParser: ->
+    @parserLatex ?= allowUnsafeEval ->
+      allowUnsafeNewFunction -> require('math-expressions')

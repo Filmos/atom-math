@@ -16,8 +16,9 @@
     "atom": ">=1.0.0 <2.0.0"
   },
   "dependencies": {
+    "integrate-adaptive-simpson": "^1.0.x",
     "loophole": "^1.1.x",
-    "mathjs": "^3.0.x",
-    "integrate-adaptive-simpson": "^1.0.x"
+    "math-expressions": "^2.0.0-alpha26",
+    "mathjs": "^3.0.x"
   }
 }
