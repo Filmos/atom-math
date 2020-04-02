@@ -65,10 +65,12 @@ module.exports = AtomMath =
       @mathUtils ?= require './math-utils'
       result = @mathUtils.evaluateExpression toEvaluate
 
-    editor.moveToEndOfLine()
-    editor.insertNewline()
-    editor.insertText "> #{result}"
-    editor.insertNewline()
+    batchUndo = ->
+      editor.moveToEndOfLine()
+      editor.insertNewline()
+      editor.insertText "> #{result}"
+      editor.insertNewline()
+    editor.transact(batchUndo)
 
   deactivate: ->
     @subscriptions.dispose()
