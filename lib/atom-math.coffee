@@ -51,24 +51,33 @@ module.exports = AtomMath =
     editor = atom.workspace.getActiveTextEditor()
     unless editor
       return
-
-    currentRow = editor.getCursorBufferPosition().row
-    if editor.lineTextForBufferRow(currentRow) is 0
-      return
-
-    toEvaluate = editor.lineTextForBufferRow(currentRow).trim()
-    @historyManager.addCommand toEvaluate
-
-    if toEvaluate.startsWith('/') and @coreCommander.isCoreCommand toEvaluate
-      result = @coreCommander.runCoreCommand toEvaluate
-    else
-      @mathUtils ?= require './math-utils'
-      result = @mathUtils.evaluateExpression toEvaluate
-
+      
+    selections = editor.getSelections()
+    results = []
+    for cursor in selections
+      cursor.clear()
+      currentRow = cursor.getBufferRange().end.row
+      if editor.lineTextForBufferRow(currentRow) is 0
+        results.push ''
+        continue
+      
+      toEvaluate = editor.lineTextForBufferRow(currentRow).trim()
+      @historyManager.addCommand toEvaluate
+      
+      if toEvaluate.startsWith('/') and @coreCommander.isCoreCommand toEvaluate
+        result = @coreCommander.runCoreCommand toEvaluate
+      else
+        @mathUtils ?= require './math-utils'
+        result = @mathUtils.evaluateExpression toEvaluate
+      results.push result
+      
     batchUndo = ->
       editor.moveToEndOfLine()
       editor.insertNewline()
-      editor.insertText "> #{result}"
+      for i of selections
+        if selections[i].getBufferRange().start.row is 0
+          continue
+        selections[i].insertText "> #{results[i]}"
       editor.insertNewline()
     editor.transact(batchUndo)
 
