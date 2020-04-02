@@ -20,6 +20,10 @@ module.exports = AtomMath =
     @subscriptions.add atom.commands.add 'atom-workspace',
       'atom-math:evaluate': (event) =>
         @evaluate event
+    
+    @subscriptions.add atom.commands.add 'atom-workspace',
+      'atom-math:evaluateInline': (event) =>
+        @evaluateInline event
 
     @subscriptions.add atom.commands.add 'atom-text-editor',
       'atom-math:getPreviousHistoryCommand': (event) =>
@@ -46,7 +50,17 @@ module.exports = AtomMath =
       editor.moveToBeginningOfLine()
       editor.selectToEndOfLine()
       editor.insertText toPrint
-
+  
+  parseInput: (input) ->
+    @historyManager.addCommand input
+    
+    if input.startsWith('/') and @coreCommander.isCoreCommand input
+      result = @coreCommander.runCoreCommand input
+    else
+      @mathUtils ?= require './math-utils'
+      result = @mathUtils.evaluateExpression input
+    return result
+  
   evaluate: ->
     editor = atom.workspace.getActiveTextEditor()
     unless editor
@@ -62,14 +76,7 @@ module.exports = AtomMath =
         continue
       
       toEvaluate = editor.lineTextForBufferRow(currentRow).trim()
-      @historyManager.addCommand toEvaluate
-      
-      if toEvaluate.startsWith('/') and @coreCommander.isCoreCommand toEvaluate
-        result = @coreCommander.runCoreCommand toEvaluate
-      else
-        @mathUtils ?= require './math-utils'
-        result = @mathUtils.evaluateExpression toEvaluate
-      results.push result
+      results.push @parseInput toEvaluate
       
     batchUndo = ->
       editor.moveToEndOfLine()
@@ -80,6 +87,41 @@ module.exports = AtomMath =
         selections[i].insertText "> #{results[i]}"
       editor.insertNewline()
     editor.transact(batchUndo)
+  
+  evaluateInline: ->
+    editor = atom.workspace.getActiveTextEditor()
+    unless editor
+      return
+      
+    selections = editor.getSelections()
+    results = []
+    for cursor in selections
+      currentRow = cursor.getBufferRange().end.row
+      if editor.lineTextForBufferRow(currentRow) is 0
+        results.push ''
+        continue
+      
+      newline = false
+      if cursor.isEmpty()
+        newline = true
+        cursor.expandOverLine()
+      
+      toEvaluate = cursor.getText().trim()
+      toEvaluate = toEvaluate.replace(/\n|\r/g," ")
+      # results.push toEvaluate
+      result = @parseInput toEvaluate
+      if newline
+        result += "\n"
+      results.push result
+      
+    batchUndo = ->
+      for i of selections
+        if selections[i].getBufferRange().start.row is 0
+          continue
+        if results[i] != undefined
+          selections[i].insertText "#{results[i]}"
+    editor.transact(batchUndo)
+  
 
   deactivate: ->
     @subscriptions.dispose()

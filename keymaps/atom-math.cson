@@ -1,5 +1,6 @@
 'atom-workspace':
   'ctrl-alt-m': 'atom-math:evaluate'
+  'ctrl-alt-shift-m': 'atom-math:evaluateInline'
 
 'atom-text-editor':
   'ctrl-up': 'atom-math:getPreviousHistoryCommand'
