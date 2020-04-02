@@ -18,6 +18,10 @@ module.exports = MathUtils =
       rawExpression = testForDollars[2]
       suffix = testForDollars[3]
 
+    rawExpression = rawExpression.replace(/\\binom{([^{}]+)}{([^{}]+)}/g, "{\\frac{($1)!}{($2)!*(($1)-($2))!}}")
+    rawExpression = rawExpression.replace(/{([^{}]+)}\\choose{([^{}]+)}/g, "{\\frac{($1)!}{($2)!*(($1)-($2))!}}")
+    rawExpression = rawExpression.replace(/\\displaystyle/g, "")
+    
     @setParser()
     @setLatexParser()
     
