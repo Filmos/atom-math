@@ -9,16 +9,21 @@ module.exports = MathUtils =
   evaluateExpression: (rawExpression) ->
     if rawExpression.startsWith 'integrate('
       return @integrate rawExpression
+      
+    prefix = ""
+    suffix = ""
+      
+    if (testForDollars = /^(\$+)([^$]+)(\$*)$/.exec(rawExpression)) || (testForDollars = /^(\$*)([^$]+)(\$+)$/.exec(rawExpression))
+      prefix = testForDollars[1]
+      rawExpression = testForDollars[2]
+      suffix = testForDollars[3]
 
     @setParser()
     @setLatexParser()
     
     try
       result = allowUnsafeEval => allowUnsafeNewFunction =>
-        @parserLatex.fromLatex(rawExpression).evaluate()
-
-      if typeof result is 'function'
-        result = 'saved'
+        prefix+@parserLatex.fromLatex(rawExpression).evaluate()+suffix
 
     catch error
       try
@@ -26,7 +31,9 @@ module.exports = MathUtils =
           @parser.eval rawExpression
 
         if typeof result is 'function'
-          result = 'saved'
+          result = 'Saved'
+        else
+          result = prefix+result+suffix
 
       catch error_inner
         result = error+""
