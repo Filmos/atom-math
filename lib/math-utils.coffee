@@ -29,7 +29,9 @@ module.exports = MathUtils =
           result = 'saved'
 
       catch error_inner
-        result = 'wrong syntax'
+        result = error+""
+        if(error+"" != error_inner+"")
+          result += " | "+error_inner
 
     result
 
